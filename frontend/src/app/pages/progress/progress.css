@@ -1,0 +1,191 @@
+/* ── Topbar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 36px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--gray-900);
+}
+.page-subtitle { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+.topbar-actions { display: flex; gap: 8px; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-ghost:hover {
+  border-color: var(--blue-500);
+  color: var(--blue-600);
+  background: var(--blue-50);
+}
+
+/* ── Page ── */
+.page { padding: 32px 36px; }
+
+/* ── Overview card ── */
+.progress-overview {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-overview::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+}
+
+.po-header { display: flex; align-items: center; gap: 24px; }
+
+.po-circle {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--blue-50);
+  border: 3px solid var(--blue-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.po-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--blue-600);
+  letter-spacing: -0.03em;
+}
+
+.po-header h2 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.po-subtitle { font-size: 14px; color: var(--gray-500); margin-top: 3px; }
+
+/* ── Progress table ── */
+.progress-table {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.pt-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 220px;
+  align-items: center;
+  padding: 16px 24px;
+  gap: 16px;
+  border-bottom: 1px solid var(--gray-100);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pt-row:last-child { border-bottom: none; }
+
+.pt-row:not(.pt-header-row):hover {
+  background: var(--blue-50);
+}
+
+.pt-header-row {
+  background: var(--gray-50);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-500);
+  cursor: default;
+  padding: 14px 24px;
+}
+
+.pt-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.pt-bar-wrap { display: flex; align-items: center; gap: 10px; }
+.pt-bar-wrap .progress-bar { flex: 1; }
+
+.pt-percent {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-600);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ── Progress bars ── */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.progress-bar.sm { height: 6px; }
+
+.fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: width 400ms var(--ease-out);
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.badge.in-progress { background: var(--blue-100); color: var(--blue-600); }
+.badge.done { background: var(--emerald-100); color: var(--emerald-600); }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .pt-row { grid-template-columns: 1fr 100px 150px; }
+}
+
+@media (max-width: 768px) {
+  .page { padding: 20px 16px; }
+  .topbar { padding: 16px 20px; }
+}

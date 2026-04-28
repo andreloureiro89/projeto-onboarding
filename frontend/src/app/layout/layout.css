@@ -1,0 +1,10 @@
+.main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  background: var(--surface-bg);
+  transition: margin-left 250ms var(--ease-out);
+}
+
+@media (max-width: 768px) {
+  .main-content { margin-left: 72px; }
+}

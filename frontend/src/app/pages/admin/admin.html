@@ -1,0 +1,267 @@
+<header class="topbar">
+  <div>
+    <h1 class="page-title">Administration</h1>
+    <p class="page-subtitle" *ngIf="auth.company()">{{ auth.company()!.tagline }}</p>
+  </div>
+  <nav class="tab-nav">
+    <button [class.active]="activeTab() === 'modules'" (click)="switchTab('modules')">Modules</button>
+    <button [class.active]="activeTab() === 'users'" (click)="switchTab('users')">Users</button>
+    <button [class.active]="activeTab() === 'progress'" (click)="switchTab('progress')">Team Progress</button>
+  </nav>
+</header>
+
+<section class="page">
+  <p class="info-msg" *ngIf="admin.message()">{{ admin.message() }}</p>
+
+  <!-- ═══════ MODULES TAB ═══════ -->
+  <div *ngIf="activeTab() === 'modules'" class="modules-admin">
+    <div class="admin-col-layout">
+
+      <!-- Module list -->
+      <div class="admin-panel module-list-panel">
+        <h2>Modules</h2>
+        <div class="admin-item-list">
+          <div class="admin-item" *ngFor="let mod of learning.modules(); trackBy: trackById"
+            [class.active]="selectedModuleId() === mod.id" (click)="selectModule(mod.id)">
+            <span class="item-order">{{ mod.order }}</span>
+            <div class="item-info">
+              <span class="item-title">{{ mod.title }}</span>
+              <span class="item-sub">{{ mod.description | slice:0:60 }}{{ mod.description.length > 60 ? '...' : '' }}</span>
+            </div>
+            <div class="item-actions" (click)="$event.stopPropagation()">
+              <button class="icon-btn" title="Edit" (click)="startEditModule(mod)">✏️</button>
+              <button class="icon-btn danger" title="Delete" (click)="deleteModule(mod.id)">🗑️</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create module form -->
+        <div class="inline-form">
+          <h3>New Module</h3>
+          <form (ngSubmit)="createModule()" class="compact-form">
+            <input type="text" placeholder="Title" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)" name="t" required />
+            <input type="text" placeholder="Description" [ngModel]="newDescription()" (ngModelChange)="newDescription.set($event)" name="d" required />
+            <input type="number" min="1" style="width:70px" [ngModel]="newOrder()" (ngModelChange)="newOrder.set($event)" name="o" />
+            <button type="submit" class="btn-sm">Add</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Module detail (contents + quiz) -->
+      <div class="admin-panel detail-panel" *ngIf="selectedModuleId()">
+
+        <!-- Edit module inline -->
+        <div class="edit-block" *ngIf="editingModuleId() as eid">
+          <h3>Edit Module</h3>
+          <form (ngSubmit)="saveEditModule()" class="compact-form">
+            <input type="text" [ngModel]="editModuleTitle()" (ngModelChange)="editModuleTitle.set($event)" name="et" required />
+            <input type="text" [ngModel]="editModuleDesc()" (ngModelChange)="editModuleDesc.set($event)" name="ed" required />
+            <input type="number" min="1" style="width:70px" [ngModel]="editModuleOrder()" (ngModelChange)="editModuleOrder.set($event)" name="eo" />
+            <button type="submit" class="btn-sm">Save</button>
+            <button type="button" class="btn-sm ghost" (click)="cancelEditModule()">Cancel</button>
+          </form>
+        </div>
+
+        <!-- Contents section -->
+        <div class="section">
+          <h3>Contents <span class="count">({{ moduleContents().length }})</span></h3>
+          <div class="admin-item-list">
+            <div class="admin-item" *ngFor="let c of moduleContents(); trackBy: trackById">
+              <!-- View mode -->
+              <ng-container *ngIf="editingContentId() !== c.id">
+                <span class="item-order">{{ c.order }}</span>
+                <div class="item-info">
+                  <span class="item-title">{{ c.title }}</span>
+                  <span class="type-badge" [attr.data-type]="c.type">{{ c.type }}</span>
+                </div>
+                <div class="item-actions">
+                  <button class="icon-btn" (click)="startEditContent(c)">✏️</button>
+                  <button class="icon-btn danger" (click)="deleteContent(c.id)">🗑️</button>
+                </div>
+              </ng-container>
+              <!-- Edit mode -->
+              <form *ngIf="editingContentId() === c.id" class="edit-inline-form" (ngSubmit)="saveEditContent()">
+                <input type="text" [ngModel]="editContentTitle()" (ngModelChange)="editContentTitle.set($event)" name="ect" />
+                <select [ngModel]="editContentType()" (ngModelChange)="editContentType.set($event)" name="ectype">
+                  <option value="text">Text</option>
+                  <option value="document">Document</option>
+                  <option value="video">Video</option>
+                </select>
+                <textarea rows="2" [ngModel]="editContentBody()" (ngModelChange)="editContentBody.set($event)" name="ecb"></textarea>
+                <input type="number" min="1" style="width:60px" [ngModel]="editContentOrder()" (ngModelChange)="editContentOrder.set($event)" name="eco" />
+                <div class="btn-row">
+                  <button type="submit" class="btn-sm">Save</button>
+                  <button type="button" class="btn-sm ghost" (click)="cancelEditContent()">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Add content form -->
+          <details class="add-form-details">
+            <summary>Add Content</summary>
+            <form (ngSubmit)="createContent()" class="stacked-form">
+              <input type="text" placeholder="Content title" [ngModel]="newContentTitle()" (ngModelChange)="newContentTitle.set($event)" name="nct" required />
+              <select [ngModel]="newContentType()" (ngModelChange)="newContentType.set($event)" name="nctype">
+                <option value="text">Text</option>
+                <option value="document">Document</option>
+                <option value="video">Video</option>
+              </select>
+              <textarea rows="3" placeholder="Body text or URL" [ngModel]="newContentBody()" (ngModelChange)="newContentBody.set($event)" name="ncb" required></textarea>
+              <input type="number" min="1" placeholder="Order" style="width:80px" [ngModel]="newContentOrder()" (ngModelChange)="newContentOrder.set($event)" name="nco" />
+              <button type="submit" class="btn-sm">Add Content</button>
+            </form>
+          </details>
+        </div>
+
+        <!-- Quiz section -->
+        <div class="section">
+          <h3>Quiz</h3>
+
+          <div *ngIf="moduleQuiz() as quiz; else noQuiz">
+            <div class="quiz-info">
+              <span class="quiz-title">{{ quiz.title }}</span>
+              <span class="count">{{ quiz.questions.length }} questions</span>
+              <label class="toggle-label">
+                <input type="checkbox" [checked]="quiz.required" (change)="toggleQuizRequired(quiz)" />
+                Required
+              </label>
+              <button class="icon-btn danger" (click)="deleteQuiz(quiz.id)">🗑️</button>
+            </div>
+
+            <!-- Questions list -->
+            <div class="admin-item-list questions-list">
+              <div class="question-item" *ngFor="let q of quiz.questions; let qi = index; trackBy: trackById">
+                <!-- View mode -->
+                <ng-container *ngIf="editingQuestionId() !== q.id">
+                  <div class="q-head">
+                    <span class="q-num">Q{{ qi + 1 }}</span>
+                    <span class="q-text-preview">{{ q.text }}</span>
+                    <div class="item-actions">
+                      <button class="icon-btn" (click)="startEditQuestion(q)">✏️</button>
+                      <button class="icon-btn danger" (click)="deleteQuestion(q.id)">🗑️</button>
+                    </div>
+                  </div>
+                  <div class="q-options-preview">
+                    <span *ngFor="let opt of q.options; let oi = index" [class.correct]="oi === q.correctAnswer">{{ opt }}</span>
+                  </div>
+                  <p class="q-explanation" *ngIf="q.explanation">{{ q.explanation }}</p>
+                </ng-container>
+                <!-- Edit mode -->
+                <form *ngIf="editingQuestionId() === q.id" class="edit-question-form" (ngSubmit)="saveEditQuestion()">
+                  <input type="text" placeholder="Question text" [ngModel]="editQText()" (ngModelChange)="editQText.set($event)" name="eqt" />
+                  <div class="options-editor">
+                    <div class="opt-row" *ngFor="let opt of editQOptions(); let oi = index">
+                      <input type="radio" [name]="'eq-correct'" [checked]="editQCorrect() === oi" (change)="editQCorrect.set(oi)" />
+                      <input type="text" [ngModel]="opt" (ngModelChange)="editUpdateOption(oi, $event)" [name]="'eqo' + oi" />
+                      <button type="button" class="icon-btn danger sm" (click)="editRemoveOption(oi)" *ngIf="editQOptions().length > 2">✕</button>
+                    </div>
+                    <button type="button" class="btn-sm ghost" (click)="editAddOption()">+ Option</button>
+                  </div>
+                  <input type="text" placeholder="Explanation" [ngModel]="editQExplanation()" (ngModelChange)="editQExplanation.set($event)" name="eqe" />
+                  <div class="btn-row">
+                    <button type="submit" class="btn-sm">Save</button>
+                    <button type="button" class="btn-sm ghost" (click)="cancelEditQuestion()">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Add question -->
+            <details class="add-form-details">
+              <summary>Add Question</summary>
+              <form (ngSubmit)="createQuestion()" class="stacked-form">
+                <input type="text" placeholder="Question text" [ngModel]="newQText()" (ngModelChange)="newQText.set($event)" name="nqt" required />
+                <div class="options-editor">
+                  <div class="opt-row" *ngFor="let opt of newQOptions(); let oi = index">
+                    <input type="radio" name="nq-correct" [checked]="newQCorrect() === oi" (change)="newQCorrect.set(oi)" />
+                    <input type="text" placeholder="Option {{ oi + 1 }}" [ngModel]="opt" (ngModelChange)="updateOption(oi, $event)" [name]="'nqo' + oi" required />
+                    <button type="button" class="icon-btn danger sm" (click)="removeOption(oi)" *ngIf="newQOptions().length > 2">✕</button>
+                  </div>
+                  <button type="button" class="btn-sm ghost" (click)="addOption()">+ Option</button>
+                </div>
+                <input type="text" placeholder="Explanation (optional)" [ngModel]="newQExplanation()" (ngModelChange)="newQExplanation.set($event)" name="nqe" />
+                <button type="submit" class="btn-sm">Add Question</button>
+              </form>
+            </details>
+          </div>
+
+          <ng-template #noQuiz>
+            <p class="muted">No quiz for this module.</p>
+            <form (ngSubmit)="createQuiz()" class="compact-form">
+              <input type="text" placeholder="Quiz title" [ngModel]="newQuizTitle()" (ngModelChange)="newQuizTitle.set($event)" name="nqzt" required />
+              <button type="submit" class="btn-sm">Create Quiz</button>
+            </form>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="admin-panel detail-panel empty-state" *ngIf="!selectedModuleId()">
+        <p class="muted">Select a module to manage its contents and quiz.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ USERS TAB ═══════ -->
+  <div *ngIf="activeTab() === 'users'">
+    <div class="admin-panel">
+      <h2>User Management</h2>
+      <div class="admin-item-list">
+        <div class="au-row" *ngFor="let u of admin.users(); trackBy: trackById">
+          <div class="au-info">
+            <div class="avatar sm">{{ getInitials(u.name) }}</div>
+            <div>
+              <span class="au-name">{{ u.name }}</span>
+              <span class="au-email">{{ u.email }}</span>
+            </div>
+          </div>
+          <div class="au-controls">
+            <select [ngModel]="u.role" (ngModelChange)="toggleUserRole(u)" [name]="'role-' + u.id">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+            <button class="btn-sm" [class.danger]="u.active" [class.ghost]="!u.active" (click)="toggleUserActive(u)">
+              {{ u.active ? 'Deactivate' : 'Activate' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ PROGRESS TAB ═══════ -->
+  <div *ngIf="activeTab() === 'progress'">
+    <div class="admin-panel">
+      <h2>Team Progress Overview</h2>
+      <div class="progress-table-admin">
+        <div class="pt-header-row">
+          <span>User</span>
+          <span>Role</span>
+          <span>Overall</span>
+          <span *ngFor="let mod of learning.modules(); trackBy: trackById" class="pt-mod-header">{{ mod.title | slice:0:15 }}</span>
+        </div>
+        <div class="pt-data-row" *ngFor="let up of admin.teamProgress()">
+          <span class="pt-user">
+            <span class="avatar xs">{{ getInitials(up.user.name) }}</span>
+            {{ up.user.name }}
+          </span>
+          <span class="badge" [class.done]="up.user.role === 'admin'">{{ up.user.role }}</span>
+          <span class="pt-global">
+            <div class="progress-bar sm"><div class="fill" [style.width.%]="up.globalPercent"></div></div>
+            <span>{{ up.globalPercent }}%</span>
+          </span>
+          <span *ngFor="let mp of up.modules" class="pt-cell" [class.done]="mp.status === 'completed'" [class.in-progress]="mp.status === 'in_progress' && mp.completionPercent > 0">
+            {{ mp.completionPercent }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Danger zone (always visible) -->
+  <div class="admin-panel danger-zone">
+    <h2>Danger Zone</h2>
+    <p>Reset all data back to the initial seed state. This cannot be undone.</p>
+    <button class="btn-danger" (click)="resetPlatformData()" [disabled]="admin.loading()">Reset all data</button>
+  </div>
+</section>

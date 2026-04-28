@@ -1,0 +1,78 @@
+<header class="topbar">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle" *ngIf="auth.company()">{{ auth.company()!.tagline }}</p>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn-ghost" (click)="refreshAll()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<section class="page">
+  <div class="stats-grid">
+    <div class="stat-card accent-blue">
+      <span class="stat-value">{{ learning.progress()?.globalPercent ?? 0 }}%</span>
+      <span class="stat-label">Overall Progress</span>
+      <div class="progress-bar"><div class="fill" [style.width.%]="learning.progress()?.globalPercent ?? 0"></div></div>
+    </div>
+    <div class="stat-card accent-green">
+      <span class="stat-value">{{ learning.completedModules().length }}</span>
+      <span class="stat-label">Completed Modules</span>
+    </div>
+    <div class="stat-card accent-orange">
+      <span class="stat-value">{{ learning.openModules().length }}</span>
+      <span class="stat-label">In Progress</span>
+    </div>
+    <div class="stat-card accent-gray">
+      <span class="stat-value">{{ learning.lockedModules().length }}</span>
+      <span class="stat-label">Locked</span>
+    </div>
+  </div>
+
+  <div class="section-block" *ngIf="learning.openModules().length">
+    <h2 class="section-title">Continue Your Training</h2>
+    <div class="module-grid">
+      <div class="module-card" *ngFor="let mod of learning.openModules(); trackBy: trackByModuleId" (click)="openModule(mod.id)">
+        <div class="mc-header">
+          <span class="mc-order">{{ mod.order }}</span>
+          <span class="badge in-progress">In progress</span>
+        </div>
+        <h3 class="mc-title">{{ mod.title }}</h3>
+        <p class="mc-desc">{{ mod.description }}</p>
+        <div class="progress-bar sm"><div class="fill" [style.width.%]="mod.progress.completionPercent"></div></div>
+        <span class="mc-percent">{{ mod.progress.completionPercent }}% complete</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" *ngIf="learning.completedModules().length">
+    <h2 class="section-title">Completed</h2>
+    <div class="module-grid">
+      <div class="module-card completed" *ngFor="let mod of learning.completedModules(); trackBy: trackByModuleId" (click)="openModule(mod.id)">
+        <div class="mc-header">
+          <span class="mc-order">{{ mod.order }}</span>
+          <span class="badge done">Completed</span>
+        </div>
+        <h3 class="mc-title">{{ mod.title }}</h3>
+        <p class="mc-desc">{{ mod.description }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block" *ngIf="learning.lockedModules().length">
+    <h2 class="section-title">Upcoming</h2>
+    <div class="module-grid">
+      <div class="module-card locked" *ngFor="let mod of learning.lockedModules(); trackBy: trackByModuleId">
+        <div class="mc-header">
+          <span class="mc-order">{{ mod.order }}</span>
+          <span class="badge locked-badge">Locked</span>
+        </div>
+        <h3 class="mc-title">{{ mod.title }}</h3>
+        <p class="mc-desc">{{ mod.description }}</p>
+      </div>
+    </div>
+  </div>
+</section>

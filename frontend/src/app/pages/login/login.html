@@ -1,0 +1,49 @@
+<div class="auth-screen">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="brand-icon">NT</div>
+      <h1>NovaTech Onboarding</h1>
+      <p>Your guided path to becoming a productive team member. Complete modules, pass quizzes, and track your progress.</p>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="auth-toggle">
+        <button type="button" [class.active]="authMode() === 'login'" (click)="setAuthMode('login')">Sign in</button>
+        <button type="button" [class.active]="authMode() === 'register'" (click)="setAuthMode('register')">Register</button>
+      </div>
+
+      <form class="auth-form" (ngSubmit)="submitAuth()">
+        <div class="field" *ngIf="authMode() === 'register'">
+          <label for="name">Full name</label>
+          <input id="name" type="text" name="name" placeholder="Enter your name"
+            [ngModel]="registerName()" (ngModelChange)="registerName.set($event)" required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" name="email" placeholder="you@company.com"
+            [ngModel]="email()" (ngModelChange)="email.set($event)" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input id="password" [type]="showPassword() ? 'text' : 'password'" name="password" placeholder="••••••••"
+              [ngModel]="password()" (ngModelChange)="password.set($event)" required />
+            <button type="button" class="pw-toggle" (click)="togglePasswordVisibility()">
+              {{ showPassword() ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="auth.loading()">
+          {{ auth.loading() ? 'Working...' : authMode() === 'register' ? 'Create account' : 'Sign in' }}
+        </button>
+      </form>
+
+      <p class="demo-hint">Demo: user&#64;local.test / user123 &bull; admin&#64;local.test / admin123</p>
+      <p class="error-msg" *ngIf="auth.error()">{{ auth.error() }}</p>
+    </div>
+  </div>
+</div>

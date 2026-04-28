@@ -1,0 +1,152 @@
+<header class="topbar">
+  <div>
+    <h1 class="page-title">Training Modules</h1>
+    <p class="page-subtitle" *ngIf="auth.company()">{{ auth.company()!.tagline }}</p>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn-ghost" (click)="refreshAll()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<section class="page modules-page">
+  <div class="modules-layout">
+    <div class="module-sidebar">
+      <div class="module-list-item"
+        *ngFor="let mod of learning.modules(); trackBy: trackByModuleId"
+        [class.active]="learning.selectedModuleId() === mod.id"
+        [class.locked]="mod.locked"
+        [class.done]="mod.progress.status === 'completed'"
+        (click)="!mod.locked && openModule(mod.id)">
+        <div class="mli-top">
+          <span class="mli-order">{{ mod.order }}</span>
+          <span class="mli-status">
+            {{ mod.locked ? '🔒' : mod.progress.status === 'completed' ? '✓' : '○' }}
+          </span>
+        </div>
+        <span class="mli-title">{{ mod.title }}</span>
+      </div>
+    </div>
+
+    <div class="module-detail" *ngIf="learning.selectedDetail() as detail">
+      <div class="detail-header">
+        <div>
+          <h2>{{ detail.module.title }}</h2>
+          <p class="detail-desc">{{ detail.module.description }}</p>
+        </div>
+        <div class="detail-progress">
+          <span class="dp-percent">{{ detail.progress.completionPercent }}%</span>
+          <div class="progress-bar"><div class="fill" [style.width.%]="detail.progress.completionPercent"></div></div>
+        </div>
+      </div>
+
+      <div class="content-list">
+        <div class="content-item" *ngFor="let content of detail.contents; trackBy: trackByContentId"
+          [class.content-completed]="content.completed">
+          <div class="ci-header">
+            <span class="ci-type" [attr.data-type]="content.type">{{ content.type }}</span>
+            <h4>{{ content.title }}</h4>
+            <span class="ci-badges">
+              <span class="badge-required" *ngIf="content.required">Required</span>
+              <span class="badge-optional" *ngIf="!content.required">Optional</span>
+              <span class="badge-done" *ngIf="content.completed">✓ Done</span>
+            </span>
+          </div>
+          <div class="ci-body" *ngIf="content.type === 'text'">
+            <p class="text-content" *ngFor="let paragraph of content.contentOrUrl.split('\n\n')">{{ paragraph }}</p>
+          </div>
+          <div class="ci-body" *ngIf="content.type === 'document' && isImage(content.contentOrUrl)">
+            <img [src]="content.contentOrUrl" [alt]="content.title" class="content-image" />
+          </div>
+          <div class="ci-body" *ngIf="content.type === 'document' && !isImage(content.contentOrUrl)">
+            <a class="content-link" [href]="content.contentOrUrl" target="_blank" rel="noreferrer">Open document</a>
+          </div>
+          <div class="ci-body" *ngIf="content.type === 'video'">
+            <a class="content-link" [href]="content.contentOrUrl" target="_blank" rel="noreferrer">Watch video</a>
+          </div>
+          <div class="ci-footer" *ngIf="!content.completed">
+            <button class="btn-mark-complete" (click)="markContentComplete(content.id)" [disabled]="learning.loading()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Mark as {{ content.type === 'video' ? 'watched' : 'read' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-block" *ngIf="detail.quiz as quiz">
+        <div class="quiz-header">
+          <h3>{{ quiz.title }}</h3>
+          <span class="ci-badges">
+            <span class="badge-required" *ngIf="quiz.required">Required</span>
+            <span class="badge-optional" *ngIf="!quiz.required">Optional</span>
+          </span>
+          <span class="quiz-count">{{ quiz.questions.length }} questions</span>
+        </div>
+
+        <!-- Quiz result overlay -->
+        <div class="quiz-result-overlay" *ngIf="learning.quizResult() as result" [class.passed]="result.passed" [class.failed]="!result.passed">
+          <div class="result-card" [class.passed]="result.passed" [class.failed]="!result.passed">
+            <div class="result-icon">{{ result.passed ? '🎉' : '📖' }}</div>
+            <h2 class="result-title">{{ result.passed ? 'Module Completed!' : 'Not Quite There Yet' }}</h2>
+            <p class="result-subtitle">{{ result.passed ? 'Great job! You\'ve mastered this module.' : 'Review the material and give it another shot.' }}</p>
+
+            <div class="result-score-ring" [class.passed]="result.passed">
+              <span class="score-value">{{ result.score }}%</span>
+              <span class="score-label">{{ result.correct }}/{{ result.total }} correct</span>
+            </div>
+
+            <div class="result-questions">
+              <div class="rq-item" *ngFor="let q of result.questions; let qi = index" [class.correct]="q.isCorrect" [class.wrong]="!q.isCorrect">
+                <div class="rq-header">
+                  <span class="rq-badge">{{ q.isCorrect ? '✓' : '✗' }}</span>
+                  <span class="rq-number">Question {{ qi + 1 }}</span>
+                </div>
+                <p class="rq-text">{{ q.text }}</p>
+                <div class="rq-answers">
+                  <div class="rq-option" *ngFor="let opt of q.options; let oi = index"
+                    [class.selected]="q.selectedAnswer === oi"
+                    [class.is-correct]="q.correctAnswer === oi"
+                    [class.is-wrong]="q.selectedAnswer === oi && q.correctAnswer !== oi">
+                    {{ opt }}
+                  </div>
+                </div>
+                <p class="rq-explanation">{{ q.explanation }}</p>
+              </div>
+            </div>
+
+            <div class="result-actions">
+              <button class="btn-primary" *ngIf="result.passed" (click)="goToDashboard()">Back to Dashboard</button>
+              <button class="btn-primary" *ngIf="!result.passed" (click)="retryQuiz()">Try Again</button>
+              <button class="btn-ghost" *ngIf="!result.passed" (click)="dismissResult()">Review Material</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz questions (hidden when results are showing) -->
+        <ng-container *ngIf="!learning.quizResult()">
+          <div class="question-card" *ngFor="let question of quiz.questions; let qi = index; trackBy: trackByQuestionId">
+            <p class="q-label">Question {{ qi + 1 }}</p>
+            <p class="q-text">{{ question.text }}</p>
+            <div class="q-options">
+              <label class="q-option" *ngFor="let option of question.options; let oi = index"
+                [class.selected]="learning.quizAnswers()[question.id] === oi">
+                <input type="radio" [name]="'q-' + question.id" [checked]="learning.quizAnswers()[question.id] === oi"
+                  (change)="selectAnswer(question.id, oi)" />
+                <span class="q-radio"></span>
+                <span>{{ option }}</span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-primary" (click)="submitQuiz()" [disabled]="learning.loading()">
+            {{ learning.loading() ? 'Submitting...' : 'Submit Quiz' }}
+          </button>
+        </ng-container>
+      </div>
+
+      <p class="error-msg" *ngIf="learning.error()">{{ learning.error() }}</p>
+    </div>
+  </div>
+</section>
