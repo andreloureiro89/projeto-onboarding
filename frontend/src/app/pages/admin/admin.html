@@ -151,7 +151,7 @@
                 <form *ngIf="editingQuestionId() === q.id" class="edit-question-form" (ngSubmit)="saveEditQuestion()">
                   <input type="text" placeholder="Question text" [ngModel]="editQText()" (ngModelChange)="editQText.set($event)" name="eqt" />
                   <div class="options-editor">
-                    <div class="opt-row" *ngFor="let opt of editQOptions(); let oi = index">
+                    <div class="opt-row" *ngFor="let opt of newQOptions(); let oi = index; trackBy: trackByIndex">
                       <input type="radio" [name]="'eq-correct'" [checked]="editQCorrect() === oi" (change)="editQCorrect.set(oi)" />
                       <input type="text" [ngModel]="opt" (ngModelChange)="editUpdateOption(oi, $event)" [name]="'eqo' + oi" />
                       <button type="button" class="icon-btn danger sm" (click)="editRemoveOption(oi)" *ngIf="editQOptions().length > 2">✕</button>
@@ -173,8 +173,7 @@
               <form (ngSubmit)="createQuestion()" class="stacked-form">
                 <input type="text" placeholder="Question text" [ngModel]="newQText()" (ngModelChange)="newQText.set($event)" name="nqt" required />
                 <div class="options-editor">
-                  <div class="opt-row" *ngFor="let opt of newQOptions(); let oi = index">
-                    <input type="radio" name="nq-correct" [checked]="newQCorrect() === oi" (change)="newQCorrect.set(oi)" />
+                  <div class="opt-row" *ngFor="let opt of newQOptions(); let oi = index; trackBy: trackByIndex">                    <input type="radio" name="nq-correct" [checked]="newQCorrect() === oi" (change)="newQCorrect.set(oi)" />
                     <input type="text" placeholder="Option {{ oi + 1 }}" [ngModel]="opt" (ngModelChange)="updateOption(oi, $event)" [name]="'nqo' + oi" required />
                     <button type="button" class="icon-btn danger sm" (click)="removeOption(oi)" *ngIf="newQOptions().length > 2">✕</button>
                   </div>

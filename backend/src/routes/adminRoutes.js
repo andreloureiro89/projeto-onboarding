@@ -6,83 +6,133 @@ function buildAdminRoutes(db, learningService) {
   const router = express.Router();
   router.use(authRequired, roleRequired("admin"));
 
-  // ───── Users ─────
-
-  router.get("/admin/users", (_req, res) => {
-    res.json(db.listUsers());
-  });
-
-  router.put("/admin/users/:id", (req, res, next) => {
+  router.get("/admin/users", async (_req, res, next) => {
     try {
-      const updated = db.updateUser(req.params.id, req.body || {});
-      const { passwordHash, ...safe } = updated;
-      res.json(safe);
-    } catch (err) { next(err); }
+      res.json(await db.listUsers());
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.get("/admin/users/:id/progress", (req, res) => {
-    const userId = req.params.id;
-    const user = db.getUserById(userId);
-    if (!user) return res.status(404).json({ error: "user not found" });
-    const progress = learningService.getMyProgress(userId);
-    const { passwordHash, ...safeUser } = user;
-    res.json({ user: safeUser, progress });
+  router.put("/admin/users/:id", async (req, res, next) => {
+    try {
+      res.json(await db.updateUser(req.params.id, req.body || {}));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.get("/admin/progress", (_req, res) => {
-    const users = db.listUsers();
-    const modules = db.listModules().filter((m) => m.active);
-    const result = users.map((user) => {
-      const userProgress = db.listProgressByUser(user.id);
-      const byModule = new Map(userProgress.map((p) => [p.moduleId, p]));
-      const modulesProgress = modules.map((m) => {
-        const p = byModule.get(m.id);
-        return p || { moduleId: m.id, completionPercent: 0, status: "in_progress" };
+  router.get("/admin/users/:id/progress", async (req, res, next) => {
+    try {
+      const user = await db.getUserById(req.params.id);
+      if (!user) return res.status(404).json({ error: "user not found" });
+
+      const progress = await learningService.getMyProgress(req.params.id);
+      const obj = user.toObject ? user.toObject() : user;
+      const { passwordHash, ...safeUser } = obj;
+
+      res.json({
+        user: { ...safeUser, id: safeUser._id.toString() },
+        progress,
       });
-      const total = modulesProgress.reduce((s, p) => s + p.completionPercent, 0);
-      const globalPercent = modules.length > 0 ? Math.round(total / modules.length) : 0;
-      return { user, globalPercent, modules: modulesProgress };
-    });
-    res.json(result);
+    } catch (err) {
+      next(err);
+    }
   });
 
-  // ───── Modules ─────
+  router.get("/admin/progress", async (_req, res, next) => {
+    try {
+      const users = await db.listUsers();
+      const modules = (await db.listModules()).filter((m) => m.active);
 
-  router.post("/admin/modules", (req, res, next) => {
+      const result = [];
+
+      for (const user of users) {
+        const userProgress = await db.listProgressByUser(user.id);
+        const byModule = new Map(
+          userProgress.map((p) => [p.moduleId.toString(), p])
+        );
+
+        const modulesProgress = modules.map((m) => {
+          return byModule.get(m.id) || {
+            moduleId: m.id,
+            completionPercent: 0,
+            status: "in_progress",
+          };
+        });
+
+        const total = modulesProgress.reduce(
+          (s, p) => s + p.completionPercent,
+          0
+        );
+
+        const globalPercent =
+          modules.length > 0 ? Math.round(total / modules.length) : 0;
+
+        result.push({
+          user,
+          globalPercent,
+          modules: modulesProgress,
+        });
+      }
+
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/admin/modules", async (req, res, next) => {
     try {
       const title = requiredString(req.body.title, "title");
       const description = requiredString(req.body.description, "description");
       const order = Number(req.body.order || 1);
-      const created = db.createModule({ title, description, order });
+
+      const created = await db.createModule({
+        title,
+        description,
+        order,
+      });
+
       res.status(201).json(created);
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.put("/admin/modules/:id", (req, res, next) => {
+  router.put("/admin/modules/:id", async (req, res, next) => {
     try {
-      const updated = db.updateModule(req.params.id, req.body || {});
-      res.json(updated);
-    } catch (err) { next(err); }
+      res.json(await db.updateModule(req.params.id, req.body || {}));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.delete("/admin/modules/:id", (req, res) => {
-    db.deleteModule(req.params.id);
-    res.status(204).send();
+  router.delete("/admin/modules/:id", async (req, res, next) => {
+    try {
+      await db.deleteModule(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
   });
 
-  // ───── Contents ─────
-
-  router.get("/admin/modules/:id/contents", (req, res) => {
-    res.json(db.listContentByModule(req.params.id));
+  router.get("/admin/modules/:id/contents", async (req, res, next) => {
+    try {
+      res.json(await db.listContentByModule(req.params.id));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.post("/admin/modules/:id/contents", (req, res, next) => {
+  router.post("/admin/modules/:id/contents", async (req, res, next) => {
     try {
       const title = requiredString(req.body.title, "title");
       const type = requiredString(req.body.type, "type");
       const contentOrUrl = requiredString(req.body.contentOrUrl, "contentOrUrl");
       const order = Number(req.body.order || 1);
-      const created = db.createContent({
+
+      const created = await db.createContent({
         moduleId: req.params.id,
         title,
         type,
@@ -90,89 +140,124 @@ function buildAdminRoutes(db, learningService) {
         order,
         required: req.body.required,
       });
+
       res.status(201).json(created);
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.put("/admin/contents/:id", (req, res, next) => {
+  router.put("/admin/contents/:id", async (req, res, next) => {
     try {
-      const updated = db.updateContent(req.params.id, req.body || {});
-      res.json(updated);
-    } catch (err) { next(err); }
+      res.json(await db.updateContent(req.params.id, req.body || {}));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.delete("/admin/contents/:id", (req, res) => {
-    db.deleteContent(req.params.id);
-    res.status(204).send();
+  router.delete("/admin/contents/:id", async (req, res, next) => {
+    try {
+      await db.deleteContent(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
   });
 
-  // ───── Quizzes ─────
+  router.get("/admin/modules/:id/quiz", async (req, res, next) => {
+    try {
+      const quiz = await db.getQuizByModule(req.params.id);
+      if (!quiz) return res.json(null);
 
-  router.get("/admin/modules/:id/quiz", (req, res) => {
-    const quiz = db.getQuizByModule(req.params.id);
-    if (!quiz) return res.json(null);
-    const questions = db.listQuestionsByQuiz(quiz.id);
-    res.json({ ...quiz, questions });
+      const questions = await db.listQuestionsByQuiz(quiz.id);
+      res.json({ ...quiz, questions });
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.post("/admin/modules/:id/quiz", (req, res, next) => {
+  router.post("/admin/modules/:id/quiz", async (req, res, next) => {
     try {
       const title = requiredString(req.body.title, "title");
       const required = req.body.required !== false;
-      const created = db.createQuiz({ moduleId: req.params.id, title, required });
+
+      const created = await db.createQuiz({
+        moduleId: req.params.id,
+        title,
+        required,
+      });
+
       res.status(201).json(created);
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.put("/admin/quizzes/:id", (req, res, next) => {
+  router.put("/admin/quizzes/:id", async (req, res, next) => {
     try {
-      const updated = db.updateQuiz(req.params.id, req.body || {});
-      res.json(updated);
-    } catch (err) { next(err); }
+      res.json(await db.updateQuiz(req.params.id, req.body || {}));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.delete("/admin/quizzes/:id", (req, res) => {
-    db.deleteQuiz(req.params.id);
-    res.status(204).send();
+  router.delete("/admin/quizzes/:id", async (req, res, next) => {
+    try {
+      await db.deleteQuiz(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
   });
 
-  // ───── Questions ─────
-
-  router.post("/admin/quizzes/:id/questions", (req, res, next) => {
+  router.post("/admin/quizzes/:id/questions", async (req, res, next) => {
     try {
       const text = requiredString(req.body.text, "text");
+
       if (!Array.isArray(req.body.options) || req.body.options.length < 2) {
         return res.status(400).json({ error: "at least 2 options required" });
       }
+
       const correctAnswer = Number(req.body.correctAnswer ?? 0);
-      const created = db.createQuestion({
+
+      const created = await db.createQuestion({
         quizId: req.params.id,
         text,
         options: req.body.options,
         correctAnswer,
         explanation: req.body.explanation || "",
       });
+
       res.status(201).json(created);
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.put("/admin/questions/:id", (req, res, next) => {
+  router.put("/admin/questions/:id", async (req, res, next) => {
     try {
-      const updated = db.updateQuestion(req.params.id, req.body || {});
-      res.json(updated);
-    } catch (err) { next(err); }
+      res.json(await db.updateQuestion(req.params.id, req.body || {}));
+    } catch (err) {
+      next(err);
+    }
   });
 
-  router.delete("/admin/questions/:id", (req, res) => {
-    db.deleteQuestion(req.params.id);
-    res.status(204).send();
+  router.delete("/admin/questions/:id", async (req, res, next) => {
+    try {
+      await db.deleteQuestion(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
   });
 
-  // ───── Reset ─────
-
-  router.post("/admin/reset", (_req, res) => {
-    db.reset();
-    res.json({ ok: true });
+  router.post("/admin/reset", async (_req, res, next) => {
+    try {
+      await db.reset();
+      res.json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
   });
 
   return router;

@@ -6,13 +6,13 @@ const { buildHealthRoutes } = require("./routes/healthRoutes");
 const { buildAuthRoutes } = require("./routes/authRoutes");
 const { buildLearningRoutes } = require("./routes/learningRoutes");
 const { buildAdminRoutes } = require("./routes/adminRoutes");
-const { MockDb } = require("./repositories/mockDb");
+const { MongoDb } = require("./repositories/mongoDb");
 const { AuthService } = require("./services/authService");
 const { LearningService } = require("./services/learningService");
 
 function buildApp() {
   const app = express();
-  const db = new MockDb();
+  const db = new MongoDb();
   const authService = new AuthService(db);
   const learningService = new LearningService(db);
 

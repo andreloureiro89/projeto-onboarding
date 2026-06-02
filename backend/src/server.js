@@ -1,11 +1,21 @@
 const env = require("./config/env");
 const { buildApp } = require("./app");
+const { connectDatabase } = require("./config/database");
 
-const { app } = buildApp();
+async function start() {
+  await connectDatabase();
 
-app.listen(env.port, () => {
-  console.log(`API running on http://localhost:${env.port}`);
-  console.log("Demo accounts:");
-  console.log("- admin@local.test / admin123");
-  console.log("- user@local.test / user123");
-});
+  const { app } = buildApp();
+
+  app.listen(env.port, () => {
+    console.log(
+      `API running on http://localhost:${env.port}`
+    );
+
+    console.log("Demo accounts:");
+    console.log("- admin@local.test / admin123");
+    console.log("- user@local.test / user123");
+  });
+}
+
+start();

@@ -360,4 +360,9 @@ export class AdminPage implements OnInit {
   }
 
   trackById(_i: number, item: { id: string }) { return item.id; }
+
+  trackByIndex(index: number) {
+    return index;
+  }
+
 }

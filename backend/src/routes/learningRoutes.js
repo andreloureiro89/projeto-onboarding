@@ -4,58 +4,82 @@ const { authRequired } = require("../middleware/auth");
 function buildLearningRoutes(learningService) {
   const router = express.Router();
 
-  router.get("/company", authRequired, (req, res, next) => {
+  router.get("/company", authRequired, async (req, res, next) => {
     try {
-      res.json(learningService.getCompany());
+      const company = await learningService.getCompany();
+      res.json(company);
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/modules", authRequired, (req, res, next) => {
+  router.get("/modules", authRequired, async (req, res, next) => {
     try {
-      res.json(learningService.listModulesForUser(req.auth.sub));
+      const modules = await learningService.listModulesForUser(req.auth.sub);
+      res.json(modules);
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/modules/:id", authRequired, (req, res, next) => {
+  router.get("/modules/:id", authRequired, async (req, res, next) => {
     try {
-      res.json(learningService.getModuleDetail(req.params.id, req.auth.sub));
+      const module = await learningService.getModuleDetail(
+        req.params.id,
+        req.auth.sub
+      );
+
+      res.json(module);
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/quizzes/:id", authRequired, (req, res, next) => {
+  router.get("/quizzes/:id", authRequired, async (req, res, next) => {
     try {
-      res.json(learningService.getQuiz(req.params.id));
+      const quiz = await learningService.getQuiz(req.params.id);
+      res.json(quiz);
     } catch (err) {
       next(err);
     }
   });
 
-  router.post("/quizzes/:id/submit", authRequired, (req, res, next) => {
+  router.post("/quizzes/:id/submit", authRequired, async (req, res, next) => {
     try {
-      const answers = req.body.answers && typeof req.body.answers === "object" ? req.body.answers : {};
-      res.json(learningService.submitQuiz({ userId: req.auth.sub, quizId: req.params.id, answers }));
+      const answers =
+        req.body.answers && typeof req.body.answers === "object"
+          ? req.body.answers
+          : {};
+
+      const result = await learningService.submitQuiz({
+        userId: req.auth.sub,
+        quizId: req.params.id,
+        answers,
+      });
+
+      res.json(result);
     } catch (err) {
       next(err);
     }
   });
 
-  router.post("/contents/:id/complete", authRequired, (req, res, next) => {
+  router.post("/contents/:id/complete", authRequired, async (req, res, next) => {
     try {
-      res.json(learningService.markContentComplete(req.auth.sub, req.params.id));
+      const result = await learningService.markContentComplete(
+        req.auth.sub,
+        req.params.id
+      );
+
+      res.json(result);
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/progress/me", authRequired, (req, res, next) => {
+  router.get("/progress/me", authRequired, async (req, res, next) => {
     try {
-      res.json(learningService.getMyProgress(req.auth.sub));
+      const progress = await learningService.getMyProgress(req.auth.sub);
+      res.json(progress);
     } catch (err) {
       next(err);
     }
