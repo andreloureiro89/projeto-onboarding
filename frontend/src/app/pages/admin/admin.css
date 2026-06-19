@@ -81,9 +81,18 @@
 .danger-zone p { font-size: 13px; color: #9f1239; margin-bottom: 14px; }
 
 /* ── Two-column module layout ── */
-.admin-col-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
-.module-list-panel { max-height: 80vh; overflow-y: auto; }
+.admin-col-layout {
+  display: grid;
+  grid-template-columns: 520px 1fr;
+  gap: 20px;
+  align-items: start;
+}
 
+.module-list-panel {
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 /* ── Item lists ── */
 .admin-item-list { display: grid; gap: 6px; margin-bottom: 16px; }
 
@@ -111,10 +120,30 @@
 }
 .admin-item.active .item-order { background: var(--blue-100); color: var(--blue-600); }
 
-.item-info { flex: 1; min-width: 0; }
-.item-title { display: block; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-sub { display: block; font-size: 11px; color: var(--gray-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-info {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
 
+.item-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--gray-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .item-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
 .icon-btn {
