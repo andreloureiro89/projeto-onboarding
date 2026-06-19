@@ -10,9 +10,9 @@ const { MongoDb } = require("./repositories/mongoDb");
 const { AuthService } = require("./services/authService");
 const { LearningService } = require("./services/learningService");
 
-function buildApp() {
+function buildApp(dbOverride = null) {
   const app = express();
-  const db = new MongoDb();
+  const db = dbOverride || new MongoDb();
   const authService = new AuthService(db);
   const learningService = new LearningService(db);
 

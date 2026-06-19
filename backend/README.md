@@ -51,6 +51,27 @@ Plataforma de onboarding corporativo desenvolvida no âmbito da unidade curricul
 cd backend
 npm install
 ```
+## Testes
+
+O backend inclui testes automatizados desenvolvidos com **Jest** e **Supertest**.
+
+Os testes validam as principais partes da API e da lógica do servidor, incluindo:
+
+- Health check da API
+- Rotas de autenticação
+- Rotas de aprendizagem
+- Rotas de administração
+- Middleware de autenticação e autorização
+- Tratamento global de erros
+- Serviços de autenticação
+- Serviços de aprendizagem
+- Validações de dados
+
+Para executar os testes do backend:
+
+```bash
+cd backend
+npm test
 
 Criar ficheiro `.env` com base em `.env.example`.
 
