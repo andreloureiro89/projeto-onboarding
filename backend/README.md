@@ -1,3 +1,8 @@
+# Nota Importante
+
+O ficheiro .env não é enviado para o GitHub devido a questões de segurança. Por esse motivo, qualquer utilizador que clone o projeto deve criar o ficheiro .env a partir do ficheiro .env.example antes de iniciar o backend.
+
+
 # NovaTech Onboarding Platform
 
 Plataforma de onboarding corporativo desenvolvida no âmbito da unidade curricular Projeto de Engenharia Informática.
