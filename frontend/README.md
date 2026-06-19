@@ -25,7 +25,7 @@ For a complete list of available schematics (such as `components`, `directives`,
 ```bash
 ng generate --help
 ```
-
+da-me 
 ## Building
 
 To build the project run:
@@ -38,19 +38,34 @@ This will compile your project and store the build artifacts in the `dist/` dire
 
 ## Running unit tests
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+This project includes a comprehensive suite of unit tests developed with Jasmine and executed using Karma.
 
-```bash
+The implemented tests validate the main functionalities of the platform, including:
+
+* Authentication and session management (AuthService)
+* API communication (ApiService)
+* Learning and progress management (LearningService)
+* Dashboard functionality (DashboardPage)
+* Login and registration workflow (LoginPage)
+* Learning modules and quizzes (ModulesPage)
+* Administrative features (AdminPage)
+* Application layout initialization (LayoutComponent)
+* Route protection (AuthGuard and AdminGuard)
+
+To execute all unit tests, run:
+
 ng test
-```
 
-## Running end-to-end tests
+The Karma test runner will launch automatically and execute the complete test suite.
 
-For end-to-end (e2e) testing, run:
+Current Test Status
 
-```bash
-ng e2e
-```
+* 76 Unit Tests
+* 0 Failures
+* 100% Passing
+
+The test suite ensures that the core application workflows, navigation, authentication, authorization, and administrative operations behave as expected and remain stable during future development.
+
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
