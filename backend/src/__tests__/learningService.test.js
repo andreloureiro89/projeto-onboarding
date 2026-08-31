@@ -236,4 +236,53 @@ describe('LearningService', () => {
     expect(result.globalPercent).toBe(0);
     expect(result.modules.length).toBe(2);
   });
+
+  it('should refuse module detail while the previous module is incomplete', async () => {
+    const db = createFakeDb();
+    const service = new LearningService(db);
+
+    await expect(service.getModuleDetail('m2', 'u1')).rejects.toThrow(
+      'module is locked'
+    );
+  });
+
+  it('should still return 404 for an unknown module before checking the lock', async () => {
+    const db = createFakeDb();
+    const service = new LearningService(db);
+
+    await expect(service.getModuleDetail('invalid', 'u1')).rejects.toThrow(
+      'module not found'
+    );
+  });
+
+  it('should report the configured passing score with the quiz result', async () => {
+    const db = createFakeDb();
+    const service = new LearningService(db);
+
+    const result = await service.submitQuiz({
+      userId: 'u1',
+      quizId: 'q1',
+      answers: { question1: 1 },
+    });
+
+    expect(result.passingScore).toBe(70);
+  });
+
+  it('should persist the quiz score before recalculating progress', async () => {
+    const db = createFakeDb();
+    const service = new LearningService(db);
+
+    const result = await service.submitQuiz({
+      userId: 'u1',
+      quizId: 'q1',
+      answers: { question1: 1 },
+    });
+
+    // The module requires one content item plus the quiz. The content was
+    // not completed, so only the quiz counts: 1 of 2 requirements. Reaching
+    // 50% proves recalculateProgress already saw the persisted quizScore --
+    // if the score were saved after the recalculation it would read 0%.
+    expect(result.progress.completionPercent).toBe(50);
+    expect(result.progress.status).toBe('in_progress');
+  });
 });

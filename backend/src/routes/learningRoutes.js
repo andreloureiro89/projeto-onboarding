@@ -37,7 +37,10 @@ function buildLearningRoutes(learningService) {
 
   router.get("/quizzes/:id", authRequired, async (req, res, next) => {
     try {
-      const quiz = await learningService.getQuiz(req.params.id);
+      const quiz = await learningService.getQuiz(
+        req.params.id,
+        req.auth.sub
+      );
       res.json(quiz);
     } catch (err) {
       next(err);
