@@ -17,7 +17,7 @@ function buildApp(dbOverride = null) {
   const learningService = new LearningService(db);
 
   app.use(cors({
-    origin: "http://localhost:4200",
+    origin: env.frontendOrigin,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
   }));

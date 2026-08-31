@@ -1,6 +1,6 @@
 const express = require("express");
 const { authRequired, roleRequired } = require("../middleware/auth");
-const { requiredString } = require("../utils/validators");
+const { requiredString, oneOf } = require("../utils/validators");
 
 function buildAdminRoutes(db, learningService) {
   const router = express.Router();
@@ -14,9 +14,27 @@ function buildAdminRoutes(db, learningService) {
     }
   });
 
+  // Only these three fields may be written. Passing req.body straight
+  // into a Mongo $set allowed an admin to overwrite passwordHash or to
+  // inject fields outside the schema.
   router.put("/admin/users/:id", async (req, res, next) => {
     try {
-      res.json(await db.updateUser(req.params.id, req.body || {}));
+      const body = req.body || {};
+      const payload = {};
+
+      if (body.name !== undefined) {
+        payload.name = requiredString(body.name, "name");
+      }
+
+      if (body.role !== undefined) {
+        payload.role = oneOf(body.role, "role", ["admin", "user"]);
+      }
+
+      if (body.active !== undefined) {
+        payload.active = Boolean(body.active);
+      }
+
+      res.json(await db.updateUser(req.params.id, payload));
     } catch (err) {
       next(err);
     }

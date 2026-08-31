@@ -1,6 +1,7 @@
 const {
   requiredString,
   requiredEmail,
+  requiredPassword,
   oneOf,
 } = require('../utils/validators');
 
@@ -46,6 +47,22 @@ describe('Validators', () => {
       expect(() =>
         requiredEmail('')
       ).toThrow('email is required');
+    });
+  });
+
+  describe('requiredPassword', () => {
+    it('should return the password when it is long enough', () => {
+      expect(requiredPassword('novatech2026')).toBe('novatech2026');
+    });
+
+    it('should throw when the password is too short', () => {
+      expect(() => requiredPassword('123456')).toThrow(
+        'password must have at least 8 characters'
+      );
+    });
+
+    it('should throw when the password is missing', () => {
+      expect(() => requiredPassword(undefined)).toThrow('password is required');
     });
   });
 

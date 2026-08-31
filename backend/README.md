@@ -51,6 +51,23 @@ Plataforma de onboarding corporativo desenvolvida no âmbito da unidade curricul
 cd backend
 npm install
 ```
+
+Criar o ficheiro `.env` a partir de `.env.example` e preencher
+`MONGODB_URI` e `JWT_SECRET`. O servidor valida ambas as variáveis no
+arranque e termina com erro se alguma estiver em falta.
+
+Popular a base de dados com os dados iniciais:
+
+```bash
+npm run seed
+```
+
+Iniciar a API:
+
+```bash
+npm start
+```
+
 ## Testes
 
 O backend inclui testes automatizados desenvolvidos com **Jest** e **Supertest**.
@@ -72,14 +89,10 @@ Para executar os testes do backend:
 ```bash
 cd backend
 npm test
-
-Criar ficheiro `.env` com base em `.env.example`.
-
-Executar:
-
-```bash
-node src/server.js
 ```
+
+Os testes correm contra repositórios em memória injetados em `buildApp`,
+pelo que não necessitam de ligação ao MongoDB nem de ficheiro `.env`.
 
 ### Frontend
 

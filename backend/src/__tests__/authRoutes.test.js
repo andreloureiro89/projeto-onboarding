@@ -123,7 +123,7 @@ describe('Auth API', () => {
       .send({
         name: 'New User',
         email: 'new@test.pt',
-        password: '123456',
+        password: 'novatech2026',
       });
 
     expect(response.status).toBe(201);
@@ -132,21 +132,44 @@ describe('Auth API', () => {
     expect(response.body.user.role).toBe('user');
   });
 
-  it('should register a new admin when valid role is provided', async () => {
+  it('should ignore a role sent in the register request body', async () => {
     const fakeDb = createFakeDb();
     const { app } = buildApp(fakeDb);
 
     const response = await request(app)
       .post('/api/auth/register')
       .send({
-        name: 'New Admin',
-        email: 'admin@test.pt',
-        password: '123456',
+        name: 'Attacker',
+        email: 'attacker@test.pt',
+        password: 'novatech2026',
         role: 'admin',
       });
 
     expect(response.status).toBe(201);
-    expect(response.body.user.role).toBe('admin');
+    expect(response.body.user.role).toBe('user');
+    expect(fakeDb.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'user' })
+    );
+  });
+
+  it('should not grant access to admin routes to a self-registered account', async () => {
+    const fakeDb = createFakeDb();
+    const { app } = buildApp(fakeDb);
+
+    const register = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Attacker',
+        email: 'attacker@test.pt',
+        password: 'novatech2026',
+        role: 'admin',
+      });
+
+    const response = await request(app)
+      .get('/api/admin/users')
+      .set('Authorization', `Bearer ${register.body.token}`);
+
+    expect(response.status).toBe(403);
   });
 
   it('should reject register with invalid email', async () => {
@@ -158,13 +181,13 @@ describe('Auth API', () => {
       .send({
         name: 'New User',
         email: 'invalid-email',
-        password: '123456',
+        password: 'novatech2026',
       });
 
     expect(response.status).toBe(400);
   });
 
-  it('should reject register with invalid role', async () => {
+  it('should reject register with a password below the minimum length', async () => {
     const fakeDb = createFakeDb();
     const { app } = buildApp(fakeDb);
 
@@ -174,10 +197,10 @@ describe('Auth API', () => {
         name: 'New User',
         email: 'new@test.pt',
         password: '123456',
-        role: 'manager',
       });
 
     expect(response.status).toBe(400);
+    expect(response.body.error).toContain('at least 8 characters');
   });
 
   it('should reject login with missing password', async () => {

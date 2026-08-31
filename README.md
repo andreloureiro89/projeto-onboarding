@@ -83,18 +83,26 @@ cd backend
 npm install
 ```
 
-Criar o ficheiro `.env` com base em `.env.example`.
+Criar o ficheiro `.env` com base em `.env.example` e preencher
+`MONGODB_URI` e `JWT_SECRET`. O servidor recusa arrancar se alguma
+destas variáveis não estiver definida.
+
+Gerar um valor para `JWT_SECRET`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
 
 Executar o seed inicial:
 
 ```bash
-node src/data/seedMongo.js
+npm run seed
 ```
 
 Iniciar o servidor:
 
 ```bash
-node src/server.js
+npm start
 ```
 
 Backend disponível em:
@@ -168,14 +176,24 @@ A aplicação utiliza MongoDB Atlas para armazenamento persistente de:
 
 ## Variáveis de Ambiente
 
-Exemplo:
+O ficheiro `backend/.env` não é versionado. Criar a partir de
+`backend/.env.example`:
 
 ```env
 PORT=3000
 FRONTEND_ORIGIN=http://localhost:4200
-JWT_SECRET=change_this_secret
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>/novatech
+JWT_SECRET=<gerar-um-segredo-aleatorio>
+MONGODB_URI=mongodb+srv://<utilizador>:<password>@<cluster>.mongodb.net/novatech
+QUIZ_PASSING_SCORE=70
 ```
+
+| Variável | Obrigatória | Descrição |
+| --- | --- | --- |
+| `PORT` | Não | Porta da API. Por omissão `3000`. |
+| `FRONTEND_ORIGIN` | Não | Origem autorizada em CORS. Por omissão `http://localhost:4200`. |
+| `JWT_SECRET` | Sim | Segredo de assinatura dos tokens. Sem este valor o servidor não arranca. |
+| `MONGODB_URI` | Sim | Connection string do MongoDB Atlas. Sem este valor o servidor não arranca. |
+| `QUIZ_PASSING_SCORE` | Não | Percentagem mínima de aprovação num questionário. Por omissão `70`. |
 
 ---
 

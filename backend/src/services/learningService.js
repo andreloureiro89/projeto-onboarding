@@ -1,3 +1,4 @@
+const env = require("../config/env");
 const { httpError } = require("../utils/httpError");
 
 class LearningService {
@@ -33,9 +34,26 @@ class LearningService {
     });
   }
 
+  // listModulesForUser computes `locked` for the interface, but the rule has
+  // to be enforced on every entry point that reads or writes module state.
+  // Otherwise the sequence is trivially skipped by calling the API directly.
+  async assertModuleUnlocked(userId, moduleId) {
+    const modules = await this.listModulesForUser(userId);
+
+    const target = modules.find(
+      (m) => String(m.id) === String(moduleId)
+    );
+
+    if (target && target.locked) {
+      throw httpError(403, "module is locked");
+    }
+  }
+
   async getModuleDetail(moduleId, userId) {
     const module = await this.db.getModule(moduleId);
     if (!module) throw httpError(404, "module not found");
+
+    await this.assertModuleUnlocked(userId, moduleId);
 
     const contents = await this.db.listContentByModule(moduleId);
     const quiz = await this.db.getQuizByModule(moduleId);
@@ -70,9 +88,11 @@ class LearningService {
     };
   }
 
-  async getQuiz(quizId) {
+  async getQuiz(quizId, userId) {
     const quiz = await this.db.getQuizById(quizId);
     if (!quiz) throw httpError(404, "quiz not found");
+
+    await this.assertModuleUnlocked(userId, quiz.moduleId);
 
     const questions = await this.db.listQuestionsByQuiz(quizId);
 
@@ -85,6 +105,8 @@ class LearningService {
   async markContentComplete(userId, contentId) {
     const content = await this.db.getContentById(contentId);
     if (!content) throw httpError(404, "content not found");
+
+    await this.assertModuleUnlocked(userId, content.moduleId);
 
     await this.db.markContentComplete(userId, contentId, content.moduleId);
 
@@ -122,7 +144,10 @@ class LearningService {
 
       const currentProgress = await this.db.getProgress(userId, moduleId);
 
-      if (currentProgress && currentProgress.quizScore >= 70) {
+      if (
+        currentProgress &&
+        currentProgress.quizScore >= env.quizPassingScore
+      ) {
         totalDone += 1;
       }
     }
@@ -146,6 +171,8 @@ class LearningService {
   async submitQuiz({ userId, quizId, answers }) {
     const quiz = await this.db.getQuizById(quizId);
     if (!quiz) throw httpError(404, "quiz not found");
+
+    await this.assertModuleUnlocked(userId, quiz.moduleId);
 
     const questions = await this.db.listQuestionsByQuiz(quizId);
     if (questions.length === 0) {
@@ -175,6 +202,11 @@ class LearningService {
     const total = questions.length;
     const score = Math.round((correct / total) * 100);
 
+    // The order of these three calls is significant and must not be changed:
+    // recalculateProgress reads quizScore back from Progress to decide
+    // whether the quiz counts as a completed requirement, so the score has
+    // to be persisted before the recalculation runs. Inverting the order
+    // leaves completionPercent one requirement behind until the next write.
     await this.db.addAttempt({
       userId,
       quizId,
@@ -194,7 +226,8 @@ class LearningService {
       score,
       correct,
       total,
-      passed: score >= 70,
+      passed: score >= env.quizPassingScore,
+      passingScore: env.quizPassingScore,
       questions: questionResults,
       progress,
     };
