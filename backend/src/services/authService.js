@@ -14,15 +14,17 @@ class AuthService {
     this.db = db;
   }
 
-  async register({ name, email, password, role = "user" }) {
+  async register({ name, email, password }) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // Hardcoded on purpose: self-registration must never be able to
+    // produce a privileged account, whatever the caller sends.
     const user = await this.db.createUser({
       name,
       email,
       passwordHash,
-      role
+      role: "user"
     });
 
     return this.issueSession(user);

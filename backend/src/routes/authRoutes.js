@@ -3,7 +3,7 @@ const { authRequired } = require("../middleware/auth");
 const {
   requiredEmail,
   requiredString,
-  oneOf
+  requiredPassword
 } = require("../utils/validators");
 
 function buildAuthRoutes(authService) {
@@ -13,17 +13,16 @@ function buildAuthRoutes(authService) {
     try {
       const name = requiredString(req.body.name, "name");
       const email = requiredEmail(req.body.email);
-      const password = requiredString(req.body.password, "password");
+      const password = requiredPassword(req.body.password);
 
-      const role = req.body.role
-        ? oneOf(req.body.role, "role", ["admin", "user"])
-        : "user";
-
+      // Self-registration always creates a regular account. Honouring a
+      // role sent in the request body let any anonymous caller create an
+      // admin account. Promotion is an administrative operation only
+      // (PUT /api/admin/users/:id).
       const session = await authService.register({
         name,
         email,
-        password,
-        role
+        password
       });
 
       res.status(201).json(session);

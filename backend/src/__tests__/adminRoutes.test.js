@@ -319,4 +319,42 @@ describe('Admin Routes', () => {
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
   });
+
+  it('should only write allowed fields when updating a user', async () => {
+    const db = createFakeDb();
+    const { app } = buildApp(db);
+    const token = await loginAsAdmin(app);
+
+    const response = await request(app)
+      .put('/api/admin/users/user1')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Updated User',
+        role: 'admin',
+        active: false,
+        passwordHash: 'injected-hash',
+        _id: 'other-id',
+      });
+
+    expect(response.status).toBe(200);
+    expect(db.updateUser).toHaveBeenCalledWith('user1', {
+      name: 'Updated User',
+      role: 'admin',
+      active: false,
+    });
+  });
+
+  it('should reject an invalid role when updating a user', async () => {
+    const db = createFakeDb();
+    const { app } = buildApp(db);
+    const token = await loginAsAdmin(app);
+
+    const response = await request(app)
+      .put('/api/admin/users/user1')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ role: 'manager' });
+
+    expect(response.status).toBe(400);
+    expect(db.updateUser).not.toHaveBeenCalled();
+  });
 });
